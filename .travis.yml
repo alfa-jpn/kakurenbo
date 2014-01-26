@@ -1,0 +1,10 @@
+language: ruby
+script: bundle exec rspec
+before_install:
+  - gem install bundler
+rvm:
+  - 1.9.3
+  - 2.1.0
+env:
+  - RAILS=3.2.16
+  - RAILS=4.0.2
