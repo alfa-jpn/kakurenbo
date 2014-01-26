@@ -8,9 +8,23 @@ Gem::Specification.new do |spec|
   spec.version       = Kakurenbo::VERSION
   spec.authors       = ["alfa-jpn"]
   spec.email         = ["a.nkmr.ja@gmail.com"]
-  spec.summary       = %q{TODO: Write a short summary. Required.}
-  spec.description   = %q{TODO: Write a longer description. Optional.}
-  spec.homepage      = ""
+
+  spec.summary       = <<-EOF
+    provides soft delete.
+    Kakurenbo is a re-implementation of paranoia and acts_as_paranoid for Rails4 and 3.
+    implemented a function that other gems are not enough.
+  EOF
+
+  spec.description   = <<-EOF
+    provides soft delete.
+    Kakurenbo is a re-implementation of paranoia and acts_as_paranoid for Rails4 and 3.
+    implemented a function that other gems are not enough.
+
+    The usage of the Kakurenbo is very very very simple. Only add `deleted_at`(datetime) to column.
+    Of course you can use `acts_as_paranoid`.In addition, Kakurenbo has many advantageous.
+  EOF
+
+  spec.homepage      = "https://github.com/alfa-jpn/kakurenbo"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files`.split($/)
