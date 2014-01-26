@@ -1,29 +1,77 @@
 # Kakurenbo
 
-TODO: Write a gem description
+Kakurenbo provides soft delete.
+Kakurenbo is a re-implementation of [paranoia](http://github.com/radar/paranoia) and [acts\_as\_paranoid](http://github.com/technoweenie/acts_as_paranoid) for Rails4 and 3. implemented a function that other gems are not enough.
 
-## Installation
+The usage of the Kakurenbo is very very very simple. Only add `deleted_at`(datetime) to column.
+Of course you can use `acts_as_paranoid`.In addition, Kakurenbo has many advantageous.
 
-Add this line to your application's Gemfile:
 
-    gem 'kakurenbo'
+# Installation
 
-And then execute:
 
-    $ bundle
+```ruby
+gem 'kakurenbo'
+```
 
-Or install it yourself as:
+# Usage
+You need only to add 'deleted_at' to model.
 
-    $ gem install kakurenbo
+```shell
+rails generate migration AddDeletedAtToModels deleted_at:datetime
+```
+The model having deleted_at becomes able to soft-delete automatically.
 
-## Usage
+_Kakurenbo provides `acts_as_paranoid` method for compatibility._
 
-TODO: Write usage instructions here
 
-## Contributing
+## Basic Example
 
-1. Fork it ( http://github.com/<my-github-username>/kakurenbo/fork )
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
+### soft-delete
+
+``` ruby
+model.destroy
+```
+
+### restore a record
+
+``` ruby
+model.restore!
+
+# This is usable, too.
+Model.restore(id)
+```
+
+When restore, call restore callbacks.`before_restore` `after_restore`
+
+
+### hard-delete
+
+
+``` ruby
+model = Model.new
+model.destroy!
+```
+
+### check if a record is fotdeleted
+
+``` ruby
+model.destroyed?
+```
+
+### find with soft-deleted
+
+``` ruby
+Model.with_deleted
+```
+
+
+### find only the soft-deleted
+
+``` ruby
+Model.only_deleted
+```
+
+
+# License
+This gem is released under the MIT license.
