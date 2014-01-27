@@ -9,8 +9,12 @@ module Kakurenbo
       # Initialize Kakurenbo in child class.
       def inherited(child_class)
         child_class.instance_eval {
-          next unless column_names.include?('deleted_at')
-          remodel_as_soft_delete
+          begin
+            next unless column_names.include?('deleted_at')
+            remodel_as_soft_delete
+          rescue
+            # When migrate.
+          end
         }
         super
       end
