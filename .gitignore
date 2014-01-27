@@ -20,3 +20,7 @@ vendor/bundle
 # --- IDE Project files ---
 # AptanaStudio
 .project
+
+# InteliJ
+*.iml
+.idea/
