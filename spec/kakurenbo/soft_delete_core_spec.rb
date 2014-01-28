@@ -145,7 +145,27 @@ describe Kakurenbo::MixinARBase do
         end
       end
 
-      context 'when destroy' do
+      context 'when destroy(class method)' do
+        it 'with id, destroy model.' do
+          expect{
+            ParanoidModel.destroy(@model.id)
+          }.to change(ParanoidModel, :count).by(-1)
+
+          expect(@model.reload.destroyed?).to be_true
+        end
+
+        it 'with ids, destroy models.' do
+          @model2 = ParanoidModel.create!
+          expect{
+            ParanoidModel.destroy([@model.id, @model2.id])
+          }.to change(ParanoidModel, :count).by(-2)
+
+          expect(@model.reload.destroyed?).to be_true
+          expect(@model2.reload.destroyed?).to be_true
+        end
+      end
+
+      context 'when destroy(instance method)' do
         it 'soft-delete model.' do
           expect{
             @model.destroy
@@ -210,12 +230,12 @@ describe Kakurenbo::MixinARBase do
         end
       end
 
-      context 'when restore.(class method)' do
+      context 'when restore(class method)' do
         before :each do
           @model.destroy
         end
 
-        it 'with id restore of instance method.' do
+        it 'with id, restore model.' do
           expect{
             ParanoidModel.restore(@model.id)
           }.to change(ParanoidModel, :count).by(1)
@@ -223,7 +243,7 @@ describe Kakurenbo::MixinARBase do
           expect(@model.reload.destroyed?).to be_false
         end
 
-        it 'with ids restore of instance method.' do
+        it 'with ids, restore models.' do
           @model2 = ParanoidModel.create!
           @model2.destroy
 
@@ -236,7 +256,7 @@ describe Kakurenbo::MixinARBase do
         end
       end
 
-      context 'when restore.(instance method)' do
+      context 'when restore(instance method)' do
         before :each do
           @model.destroy
         end
@@ -291,7 +311,7 @@ describe Kakurenbo::MixinARBase do
       end
     end
 
-    describe 'NormalChildModel' do
+    describe 'Parent has_many NormalChildModel' do
       before :each do
         @parent = ParentModel.create!
         @first  = @parent.normal_child_models.create!
@@ -307,7 +327,7 @@ describe Kakurenbo::MixinARBase do
       end
     end
 
-    describe 'ParanoidChildModel' do
+    describe 'Parent has_many ParanoidChildModel' do
       before :each do
         @parent = ParentModel.create!
         @first  = @parent.paranoid_child_models.create!
@@ -316,14 +336,14 @@ describe Kakurenbo::MixinARBase do
       end
 
       context 'when parent was destroyed' do
-        it 'remove normal_child_models' do
+        it 'remove paranoid_child_models' do
           expect{@parent.destroy}.to change(ParanoidChildModel, :count).by(-3)
           expect(@first.reload.destroyed?).to be_true
           expect(@second.reload.destroyed?).to be_true
           expect(@third.reload.destroyed?).to be_true
         end
 
-        it 'restore with normal_child_models' do
+        it 'restore with paranoid_child_models' do
           @parent.destroy
           expect{@parent.restore!}.to change(ParanoidChildModel, :count).by(3)
           expect(@first.reload.destroyed?).to be_false
@@ -349,19 +369,19 @@ describe Kakurenbo::MixinARBase do
       end
     end
 
-    describe 'ParanoidSingleChildModel' do
+    describe 'Parent has_one ParanoidSingleChildModel' do
       before :each do
         @parent = ParentModel.create!
         @first  = ParanoidSingleChildModel.create!(parent_model_id: @parent.id)
       end
 
       context 'when parent was destroyed' do
-        it 'remove normal_child_models' do
+        it 'remove paranoid_single_child_models' do
           expect{@parent.destroy}.to change(ParanoidSingleChildModel, :count).by(-1)
           expect(@first.reload.destroyed?).to be_true
         end
 
-        it 'restore with normal_child_models' do
+        it 'restore with paranoid_single_child_models' do
           @parent.destroy
           expect{@parent.restore!}.to change(ParanoidSingleChildModel, :count).by(1)
           expect(@first.reload.destroyed?).to be_false
@@ -383,19 +403,19 @@ describe Kakurenbo::MixinARBase do
       end
     end
 
-    describe 'ParanoidSingleChildModel' do
+    describe 'Parent belongs_to ParanoidSingleChildModel' do
       before :each do
         @first  = ParanoidSingleChildModel.create!
         @parent = ParentModel.create!(child_id: @first.id)
       end
 
       context 'when parent was destroyed' do
-        it 'remove normal_child_models' do
+        it 'remove paranoid_single_child_models' do
           expect{@parent.destroy}.to change(ParanoidSingleChildModel, :count).by(-1)
           expect(@first.reload.destroyed?).to be_true
         end
 
-        it 'restore with normal_child_models' do
+        it 'restore with paranoid_single_child_models' do
           @parent.destroy
           expect{@parent.restore!}.to change(ParanoidSingleChildModel, :count).by(1)
           expect(@first.reload.destroyed?).to be_false

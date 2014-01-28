@@ -12,12 +12,23 @@ module Kakurenbo
         true
       end
 
-      # Restore models.
+      # Destroy model(s).
       #
-      # @param id      [Array or Integer] id or ids.
+      # @param id [Array<Integer> or Integer] id or ids
+      def destroy(id)
+        transaction do
+          where(:id => id).each{|m| m.destroy}
+        end
+      end
+
+      # Restore model(s).
+      #
+      # @param id      [Array<Integer> or Integer] id or ids.
       # @param options [Hash] options(same restore of instance methods.)
       def restore(id, options = {})
-        only_deleted.where(:id => id).each{|m| m.restore!(options)}
+        transaction do
+          only_deleted.where(:id => id).each{|m| m.restore!(options)}
+        end
       end
     end
 
@@ -52,10 +63,10 @@ module Kakurenbo
 
     def destroy
       return if destroyed?
-      with_transaction_returning_status {
+      with_transaction_returning_status do
         destroy_at = current_time_from_proper_timezone
         run_callbacks(:destroy){ update_column kakurenbo_column, destroy_at }
-      }
+      end
     end
 
     def destroyed?
@@ -82,15 +93,16 @@ module Kakurenbo
         :recursive => true
       )
 
-      with_transaction_returning_status {
+      with_transaction_returning_status do
         run_callbacks(:restore) do
           parent_deleted_at = send(kakurenbo_column)
           update_column kakurenbo_column, nil
           restore_associated_records(parent_deleted_at) if options[:recursive]
         end
-      }
+      end
     end
     alias_method :restore, :restore!
+    alias_method :recover, :restore!
 
     private
     # Calls the given block once for each dependent destroy records.

@@ -13,7 +13,7 @@ module Kakurenbo
             next unless column_names.include?('deleted_at')
             remodel_as_soft_delete
           rescue
-            # When migrate.
+            # When exec first db:migrate and db:migrate:reset.
           end
         }
         super
