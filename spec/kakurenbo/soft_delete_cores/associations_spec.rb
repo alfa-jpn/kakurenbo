@@ -228,4 +228,35 @@ describe Kakurenbo::SoftDeleteCore do
       end
     end
   end
+
+  describe 'Normal and ParanidChildModel' do
+    before :each do
+      @parent = ParentModel.create!
+
+      @normal_first    = @parent.normal_child_models.create!
+      @normal_second   = @parent.normal_child_models.create!
+
+      @paranoid_first  = @parent.paranoid_child_models.create!
+      @paranoid_second = @parent.paranoid_child_models.create!
+
+      @normal_hitori   = NormalChildModel.create!
+      @paranoid_hitori = ParanoidChildModel.create!
+    end
+
+    context 'when parent be hard-destroyed' do
+      it 'hard-destroy normal childlen who parent has.' do
+        expect{@parent.destroy!}.to change(NormalChildModel, :count).by(-2)
+      end
+
+      it 'hard-destroy paranoid childlen who parent has.' do
+        expect{@parent.destroy!}.to change{ParanoidChildModel.with_deleted.count}.by(-2)
+      end
+
+      it 'not destroy child who parent does not have.' do
+        @parent.destroy!
+        expect(@normal_hitori.reload.destroyed?).to   be_false
+        expect(@paranoid_hitori.reload.destroyed?).to be_false
+      end
+    end
+  end
 end

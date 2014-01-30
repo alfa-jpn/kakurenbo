@@ -5,6 +5,7 @@ module Kakurenbo
       base_class.extend ClassMethods
       base_class.extend Callbacks
       base_class.extend Scopes
+      base_class.extend Aliases
     end
 
     module ClassMethods
@@ -56,6 +57,16 @@ module Kakurenbo
       end
     end
 
+    module Aliases
+      def self.extended(base_class)
+        base_class.instance_eval {
+          alias_method :delete!, :hard_delete!
+          alias_method :restore, :restore!
+          alias_method :recover, :restore!
+        }
+      end
+    end
+
     def delete
       return if new_record? or destroyed?
       update_column kakurenbo_column, current_time_from_proper_timezone
@@ -67,6 +78,16 @@ module Kakurenbo
         destroy_at = current_time_from_proper_timezone
         run_callbacks(:destroy){ update_column kakurenbo_column, destroy_at }
       end
+    end
+
+    def destroy!
+      with_transaction_returning_status do
+        each_dependent_destroy_records do |record|
+          record.destroy!
+        end
+      end
+      self.reload
+      self.hard_destroy!
     end
 
     def destroyed?
@@ -101,8 +122,6 @@ module Kakurenbo
         end
       end
     end
-    alias_method :restore, :restore!
-    alias_method :recover, :restore!
 
     private
     # Calls the given block once for each dependent destroy records.
@@ -118,7 +137,7 @@ module Kakurenbo
         next if resource.nil?
 
         if association.collection?
-          resource = resource.only_deleted
+          resource = resource.with_deleted
         else
           resource = (resource.destroyed?) ? [resource] : []
         end
@@ -133,6 +152,7 @@ module Kakurenbo
     # @param parent_deleted_at [Time] The time when parent was deleted.
     def restore_associated_records(parent_deleted_at)
       each_dependent_destroy_records do |record|
+        next unless record.destroyed?
         next unless parent_deleted_at <= record.send(kakurenbo_column)
         record.restore!
       end

@@ -31,8 +31,8 @@ module Kakurenbo
         )
 
         unless paranoid?
-          alias_method :delete!,  :delete
-          alias_method :destroy!, :destroy
+          alias_method :hard_delete!,  :delete
+          alias_method :hard_destroy!, :destroy
 
           class_attribute :kakurenbo_column
           self.kakurenbo_column = options[:column]
