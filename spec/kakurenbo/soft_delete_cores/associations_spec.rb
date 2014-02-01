@@ -38,11 +38,11 @@ describe Kakurenbo::SoftDeleteCore do
     end
 
     context 'when parent be destroyed' do
-      it 'destroy childlen who parent has.' do
+      it 'destroy children who parent has.' do
         expect{@parent.destroy}.to change(NormalChildModel, :count).by(-2)
       end
 
-      it 'not destroy childlen who parent does not have.' do
+      it 'not destroy children who parent does not have.' do
         @parent.destroy
         expect(@hitori.reload.destroyed?).to be_false
       end
@@ -60,14 +60,14 @@ describe Kakurenbo::SoftDeleteCore do
     end
 
     context 'when parent be destroyed' do
-      it 'destroy childlen who parent has.' do
+      it 'destroy children who parent has.' do
         expect{@parent.destroy}.to change(ParanoidChildModel, :count).by(-3)
         expect(@first.reload.destroyed?).to be_true
         expect(@second.reload.destroyed?).to be_true
         expect(@third.reload.destroyed?).to be_true
       end
 
-      it 'not destroy childlen who parent does not have.' do
+      it 'not destroy children who parent does not have.' do
         @parent.destroy
         expect(@hitori.reload.destroyed?).to be_false
       end
@@ -79,14 +79,14 @@ describe Kakurenbo::SoftDeleteCore do
         @hitori.destroy
       end
 
-      it 'restore childlen who parent has.' do
+      it 'restore children who parent has.' do
         expect{@parent.restore!}.to change(ParanoidChildModel, :count).by(3)
         expect(@first.reload.destroyed?).to be_false
         expect(@second.reload.destroyed?).to be_false
         expect(@third.reload.destroyed?).to be_false
       end
 
-      it 'not restore childlen who parent does not have.' do
+      it 'not restore children who parent does not have.' do
         @parent.restore!
         expect(@hitori.reload.destroyed?).to be_true
       end
@@ -109,7 +109,7 @@ describe Kakurenbo::SoftDeleteCore do
         expect(@first.reload.destroyed?).to be_true
       end
 
-      it 'restore childlen who deleted after parent was deleted' do
+      it 'restore children who deleted after parent was deleted' do
         expect{@parent.restore!}.to change(ParanoidChildModel, :count).by(2)
         expect(@second.reload.destroyed?).to be_false
         expect(@third.reload.destroyed?).to be_false
@@ -229,7 +229,7 @@ describe Kakurenbo::SoftDeleteCore do
     end
   end
 
-  describe 'Normal and ParanidChildModel' do
+  describe 'ChildModels' do
     before :each do
       @parent = ParentModel.create!
 
@@ -239,23 +239,31 @@ describe Kakurenbo::SoftDeleteCore do
       @paranoid_first  = @parent.paranoid_child_models.create!
       @paranoid_second = @parent.paranoid_child_models.create!
 
+      @single_first    = ParanoidSingleChildModel.create!(parent_model_id: @parent.id)
+
       @normal_hitori   = NormalChildModel.create!
       @paranoid_hitori = ParanoidChildModel.create!
+      @single_hitori   = ParanoidSingleChildModel.create!
     end
 
     context 'when parent be hard-destroyed' do
-      it 'hard-destroy normal childlen who parent has.' do
+      it 'hard-destroy normal children who parent has.' do
         expect{@parent.destroy!}.to change(NormalChildModel, :count).by(-2)
       end
 
-      it 'hard-destroy paranoid childlen who parent has.' do
+      it 'hard-destroy paranoid children who parent has.' do
         expect{@parent.destroy!}.to change{ParanoidChildModel.with_deleted.count}.by(-2)
+      end
+
+      it 'hard-destroy paranoid single child who parent has.' do
+        expect{@parent.destroy!}.to change{ParanoidSingleChildModel.with_deleted.count}.by(-1)
       end
 
       it 'not destroy child who parent does not have.' do
         @parent.destroy!
         expect(@normal_hitori.reload.destroyed?).to   be_false
         expect(@paranoid_hitori.reload.destroyed?).to be_false
+        expect(@single_hitori.reload.destroyed?).to   be_false
       end
     end
   end

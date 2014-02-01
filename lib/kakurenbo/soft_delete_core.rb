@@ -60,9 +60,10 @@ module Kakurenbo
     module Aliases
       def self.extended(base_class)
         base_class.instance_eval {
-          alias_method :delete!, :hard_delete!
-          alias_method :restore, :restore!
-          alias_method :recover, :restore!
+          alias_method :delete!,  :hard_delete!
+          alias_method :deleted?, :destroyed?
+          alias_method :restore,  :restore!
+          alias_method :recover,  :restore!
         }
       end
     end
@@ -82,18 +83,14 @@ module Kakurenbo
 
     def destroy!
       with_transaction_returning_status do
-        each_dependent_destroy_records do |record|
-          record.destroy!
-        end
+        hard_destroy_associated_records
+        self.reload.hard_destroy!
       end
-      self.reload
-      self.hard_destroy!
     end
 
     def destroyed?
       !send(kakurenbo_column).nil?
     end
-    alias_method :deleted?, :destroyed?
 
     def kakurenbo_column
       self.class.kakurenbo_column
@@ -109,11 +106,7 @@ module Kakurenbo
     #   defaults: {
     #     recursive: true
     #   }
-    def restore!(options = {})
-      options.reverse_merge!(
-        :recursive => true
-      )
-
+    def restore!(options = {:recursive => true})
       with_transaction_returning_status do
         run_callbacks(:restore) do
           parent_deleted_at = send(kakurenbo_column)
@@ -124,6 +117,21 @@ module Kakurenbo
     end
 
     private
+    # get recoreds of association.
+    #
+    # @param association [ActiveRecord::Associations] association.
+    # @return [Array or CollectionProxy] records.
+    def associated_records(association)
+      resource = send(association.name)
+      if resource.nil?
+        []
+      elsif association.collection?
+        resource.with_deleted
+      else
+        [resource]
+      end
+    end
+
     # Calls the given block once for each dependent destroy records.
     # @note Only call the class of paranoid.
     #
@@ -133,16 +141,14 @@ module Kakurenbo
         next unless association.options[:dependent] == :destroy
         next unless association.klass.paranoid?
 
-        resource = send(association.name)
-        next if resource.nil?
+        associated_records(association).each &block
+      end
+    end
 
-        if association.collection?
-          resource = resource.with_deleted
-        else
-          resource = (resource.destroyed?) ? [resource] : []
-        end
-
-        resource.each &block
+    # Hard-Destroy associated records.
+    def hard_destroy_associated_records
+      each_dependent_destroy_records do |record|
+        record.destroy!
       end
     end
 
