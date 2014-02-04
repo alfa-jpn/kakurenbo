@@ -13,7 +13,7 @@ module Kakurenbo
             next unless column_names.include?('deleted_at')
             remodel_as_soft_delete
           rescue
-            # When migrate.
+            # When exec first db:migrate and db:migrate:reset.
           end
         }
         super
@@ -31,8 +31,8 @@ module Kakurenbo
         )
 
         unless paranoid?
-          alias_method :delete!,  :delete
-          alias_method :destroy!, :destroy
+          alias_method :hard_delete!,  :delete
+          alias_method :hard_destroy!, :destroy
 
           class_attribute :kakurenbo_column
           self.kakurenbo_column = options[:column]

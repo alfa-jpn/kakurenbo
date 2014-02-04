@@ -5,6 +5,7 @@ module Kakurenbo
       base_class.extend ClassMethods
       base_class.extend Callbacks
       base_class.extend Scopes
+      base_class.extend Aliases
     end
 
     module ClassMethods
@@ -12,12 +13,23 @@ module Kakurenbo
         true
       end
 
-      # Restore models.
+      # Destroy model(s).
       #
-      # @param id      [Array or Integer] id or ids.
+      # @param id [Array<Integer> or Integer] id or ids
+      def destroy(id)
+        transaction do
+          where(:id => id).each{|m| m.destroy}
+        end
+      end
+
+      # Restore model(s).
+      #
+      # @param id      [Array<Integer> or Integer] id or ids.
       # @param options [Hash] options(same restore of instance methods.)
-      def restore(id, options = {})
-        only_deleted.where(:id => id).each{|m| m.restore!(options)}
+      def restore(id, options = {:recursive => true})
+        transaction do
+          only_deleted.where(:id => id).each{|m| m.restore!(options)}
+        end
       end
     end
 
@@ -45,6 +57,17 @@ module Kakurenbo
       end
     end
 
+    module Aliases
+      def self.extended(base_class)
+        base_class.instance_eval {
+          alias_method :delete!,  :hard_delete!
+          alias_method :deleted?, :destroyed?
+          alias_method :restore,  :restore!
+          alias_method :recover,  :restore!
+        }
+      end
+    end
+
     def delete
       return if new_record? or destroyed?
       update_column kakurenbo_column, current_time_from_proper_timezone
@@ -52,16 +75,22 @@ module Kakurenbo
 
     def destroy
       return if destroyed?
-      with_transaction_returning_status {
+      with_transaction_returning_status do
         destroy_at = current_time_from_proper_timezone
         run_callbacks(:destroy){ update_column kakurenbo_column, destroy_at }
-      }
+      end
+    end
+
+    def destroy!
+      with_transaction_returning_status do
+        hard_destroy_associated_records
+        self.reload.hard_destroy!
+      end
     end
 
     def destroyed?
       !send(kakurenbo_column).nil?
     end
-    alias_method :deleted?, :destroyed?
 
     def kakurenbo_column
       self.class.kakurenbo_column
@@ -77,22 +106,32 @@ module Kakurenbo
     #   defaults: {
     #     recursive: true
     #   }
-    def restore!(options = {})
-      options.reverse_merge!(
-        :recursive => true
-      )
-
-      with_transaction_returning_status {
+    def restore!(options = {:recursive => true})
+      with_transaction_returning_status do
         run_callbacks(:restore) do
           parent_deleted_at = send(kakurenbo_column)
           update_column kakurenbo_column, nil
           restore_associated_records(parent_deleted_at) if options[:recursive]
         end
-      }
+      end
     end
-    alias_method :restore, :restore!
 
     private
+    # get recoreds of association.
+    #
+    # @param association [ActiveRecord::Associations] association.
+    # @return [Array or CollectionProxy] records.
+    def associated_records(association)
+      resource = send(association.name)
+      if resource.nil?
+        []
+      elsif association.collection?
+        resource.with_deleted
+      else
+        [resource]
+      end
+    end
+
     # Calls the given block once for each dependent destroy records.
     # @note Only call the class of paranoid.
     #
@@ -102,16 +141,14 @@ module Kakurenbo
         next unless association.options[:dependent] == :destroy
         next unless association.klass.paranoid?
 
-        resource = send(association.name)
-        next if resource.nil?
+        associated_records(association).each &block
+      end
+    end
 
-        if association.collection?
-          resource = resource.only_deleted
-        else
-          resource = (resource.destroyed?) ? [resource] : []
-        end
-
-        resource.each &block
+    # Hard-Destroy associated records.
+    def hard_destroy_associated_records
+      each_dependent_destroy_records do |record|
+        record.destroy!
       end
     end
 
@@ -121,6 +158,7 @@ module Kakurenbo
     # @param parent_deleted_at [Time] The time when parent was deleted.
     def restore_associated_records(parent_deleted_at)
       each_dependent_destroy_records do |record|
+        next unless record.destroyed?
         next unless parent_deleted_at <= record.send(kakurenbo_column)
         record.restore!
       end

@@ -31,6 +31,16 @@ _Kakurenbo provides `acts_as_paranoid` method for compatibility._
 
 ``` ruby
 model.destroy
+
+# This is usable, too.
+Model.destroy(id)
+Model.destroy([id1,id2,id3])
+```
+
+when want without callbacks.
+
+``` ruby
+model.delete
 ```
 
 ### restore a record
@@ -40,6 +50,7 @@ model.restore!
 
 # This is usable, too.
 Model.restore(id)
+Model.restore([id1,id2,id3])
 ```
 
 When restore, call restore callbacks.`before_restore` `after_restore`
