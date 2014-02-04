@@ -26,7 +26,7 @@ module Kakurenbo
       #
       # @param id      [Array<Integer> or Integer] id or ids.
       # @param options [Hash] options(same restore of instance methods.)
-      def restore(id, options = {})
+      def restore(id, options = {:recursive => true})
         transaction do
           only_deleted.where(:id => id).each{|m| m.restore!(options)}
         end
