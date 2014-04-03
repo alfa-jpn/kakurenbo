@@ -4,6 +4,7 @@ describe Kakurenbo::MixinARBase do
   create_temp_table(:hard_deletes) {}
   create_temp_table(:soft_deletes) {|t| t.datetime :deleted_at}
   create_temp_table(:other_columns){|t| t.datetime :destroyed_at}
+  create_temp_table(:other_table_name) {|t| t.datetime :deleted_at}
 
   context 'when mixin ActiveRecord::Base' do
     it 'has paranoid? in class methods.'do
@@ -52,6 +53,22 @@ describe Kakurenbo::MixinARBase do
 
     it 'kakurenbo_column is `:destroyed_at`.' do
       expect(OtherColumn.kakurenbo_column).to eq(:destroyed_at)
+    end
+  end
+
+  context 'when define class of DiffTableName' do
+    before :all do
+      class DiffTableName < ActiveRecord::Base
+        self.table_name='other_table_name'
+      end
+    end
+
+    it 'table_name is right.' do
+      expect(DiffTableName.table_name).to eq('other_table_name')
+    end
+
+    it 'paranoid? return true.' do
+      expect(DiffTableName.paranoid?).to be_true
     end
   end
 end
