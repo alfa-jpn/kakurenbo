@@ -11,6 +11,13 @@ module Kakurenbo
         child_class.instance_eval do
           remodel_as_soft_delete if has_kakurenbo_column?
         end
+
+        # Define after initialize. Because `table_exists?` call `table_name=`.
+        child_class.define_singleton_method :table_name= do |value|
+          super(value)
+          remodel_as_soft_delete if has_kakurenbo_column?
+        end
+
         super
       end
 
@@ -42,19 +49,13 @@ module Kakurenbo
         false
       end
 
-      # When set table name, remodel.
-      def table_name=(value)
-        super
-        remodel_as_soft_delete if has_kakurenbo_column?
-      end
-
       private
       # Check if Model has kakurenbo_column.
       #
       # @return [Boolean] result.
       def has_kakurenbo_column?
         begin
-          column_names.include?('deleted_at')
+          table_exists? and column_names.include?('deleted_at')
         rescue
           false
         end
