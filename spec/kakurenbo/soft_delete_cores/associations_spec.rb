@@ -248,19 +248,19 @@ describe Kakurenbo::SoftDeleteCore do
 
     context 'when parent be hard-destroyed' do
       it 'hard-destroy normal children who parent has.' do
-        expect{@parent.destroy!}.to change(NormalChildModel, :count).by(-2)
+        expect{@parent.destroy(hard: true)}.to change(NormalChildModel, :count).by(-2)
       end
 
       it 'hard-destroy paranoid children who parent has.' do
-        expect{@parent.destroy!}.to change{ParanoidChildModel.with_deleted.count}.by(-2)
+        expect{@parent.destroy(hard: true)}.to change{ParanoidChildModel.with_deleted.count}.by(-2)
       end
 
       it 'hard-destroy paranoid single child who parent has.' do
-        expect{@parent.destroy!}.to change{ParanoidSingleChildModel.with_deleted.count}.by(-1)
+        expect{@parent.destroy(hard: true)}.to change{ParanoidSingleChildModel.with_deleted.count}.by(-1)
       end
 
       it 'not destroy child who parent does not have.' do
-        @parent.destroy!
+        @parent.destroy(hard: true)
         expect(@normal_hitori.reload.destroyed?).to   be_falsey
         expect(@paranoid_hitori.reload.destroyed?).to be_falsey
         expect(@single_hitori.reload.destroyed?).to   be_falsey

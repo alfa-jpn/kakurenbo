@@ -8,10 +8,10 @@ module Kakurenbo
     module ClassMethods
       # Initialize Kakurenbo in child class.
       def inherited(child_class)
+        super
         child_class.instance_eval do
           remodel_as_soft_delete if has_kakurenbo_column?
         end
-        super
       end
 
       # Remodel Model as soft-delete.

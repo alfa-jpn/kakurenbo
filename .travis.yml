@@ -6,6 +6,5 @@ rvm:
   - 1.9.3
   - 2.1.0
 env:
-  - ACTIVE_RECORD_VERSION='~> 3.2.16'
   - ACTIVE_RECORD_VERSION='~> 4.0.2'
   - ACTIVE_RECORD_VERSION='~> 4.1.0'

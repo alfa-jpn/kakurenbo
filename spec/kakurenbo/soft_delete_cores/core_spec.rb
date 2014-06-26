@@ -129,10 +129,10 @@ describe Kakurenbo::SoftDeleteCore do
       end
     end
 
-    context 'when destroy!' do
+    context 'when destroy(hard: true)' do
       it 'hard-delete model.' do
         expect{
-          @model.destroy!
+          @model.destroy(hard: true)
         }.to change{
           ParanoidModel.all.with_deleted.count
         }.by(-1)
