@@ -26,7 +26,7 @@ describe Kakurenbo::MixinARBase do
     end
 
     it 'paranoid? return false.' do
-      expect(HardDelete.paranoid?).to be_false
+      expect(HardDelete.paranoid?).to be_falsey
     end
   end
 
@@ -36,7 +36,7 @@ describe Kakurenbo::MixinARBase do
     end
 
     it 'paranoid? return true.' do
-      expect(SoftDelete.paranoid?).to be_true
+      expect(SoftDelete.paranoid?).to be_truthy
     end
   end
 
@@ -48,7 +48,7 @@ describe Kakurenbo::MixinARBase do
     end
 
     it 'paranoid? return true.' do
-      expect(OtherColumn.paranoid?).to be_true
+      expect(OtherColumn.paranoid?).to be_truthy
     end
 
     it 'kakurenbo_column is `:destroyed_at`.' do
@@ -68,7 +68,7 @@ describe Kakurenbo::MixinARBase do
     end
 
     it 'paranoid? return true.' do
-      expect(DiffTableName.paranoid?).to be_true
+      expect(DiffTableName.paranoid?).to be_truthy
     end
   end
 end

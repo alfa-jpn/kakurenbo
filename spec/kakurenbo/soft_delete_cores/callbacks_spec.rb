@@ -22,17 +22,17 @@ describe Kakurenbo::SoftDeleteCore::Callbacks do
 
     it 'call before_restore.' do
       ParanoidModel.before_restore :before_restore_callback
-      @callback_model.should_receive(:before_restore_callback).once
+      expect(@callback_model).to receive(:before_restore_callback).once
     end
 
     it 'call around_restore.' do
       ParanoidModel.around_restore :around_restore_callback
-      @callback_model.should_receive(:around_restore_callback).once
+      expect(@callback_model).to receive(:around_restore_callback).once
     end
 
     it 'call after_restore.' do
       ParanoidModel.after_restore :after_restore_callback
-      @callback_model.should_receive(:after_restore_callback).once
+      expect(@callback_model).to receive(:after_restore_callback).once
     end
   end
 end
