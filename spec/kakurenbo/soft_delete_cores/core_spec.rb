@@ -36,9 +36,9 @@ describe Kakurenbo::SoftDeleteCore do
         ParanoidModel.after_destroy  :after_destroy_callback
         ParanoidModel.after_commit   :after_commit_callback
 
-        @model.should_receive(:before_destroy_callback).exactly(0).times
-        @model.should_receive(:after_destroy_callback).exactly(0).times
-        @model.should_receive(:after_commit_callback).exactly(0).times
+        expect(@model).to receive(:before_destroy_callback).exactly(0).times
+        expect(@model).to receive(:after_destroy_callback).exactly(0).times
+        expect(@model).to receive(:after_commit_callback).exactly(0).times
 
         @model.delete
       end
@@ -48,9 +48,9 @@ describe Kakurenbo::SoftDeleteCore do
         ParanoidModel.before_save   :before_save_callback
         ParanoidModel.validate      :validate_callback
 
-        @model.should_receive(:before_update_callback).exactly(0).times
-        @model.should_receive(:before_save_callback).exactly(0).times
-        @model.should_receive(:validate_callback).exactly(0).times
+        expect(@model).to receive(:before_update_callback).exactly(0).times
+        expect(@model).to receive(:before_save_callback).exactly(0).times
+        expect(@model).to receive(:validate_callback).exactly(0).times
 
         @model.delete
       end
@@ -76,7 +76,7 @@ describe Kakurenbo::SoftDeleteCore do
           ParanoidModel.destroy(@model.id)
         }.to change(ParanoidModel, :count).by(-1)
 
-        expect(@model.reload.destroyed?).to be_true
+        expect(@model.reload.destroyed?).to be_truthy
       end
 
       it 'with ids, destroy models.' do
@@ -84,8 +84,8 @@ describe Kakurenbo::SoftDeleteCore do
           ParanoidModel.destroy([@model.id, @model2.id])
         }.to change(ParanoidModel, :count).by(-2)
 
-        expect(@model.reload.destroyed?).to be_true
-        expect(@model2.reload.destroyed?).to be_true
+        expect(@model.reload.destroyed?).to be_truthy
+        expect(@model2.reload.destroyed?).to be_truthy
       end
     end
 
@@ -109,9 +109,9 @@ describe Kakurenbo::SoftDeleteCore do
         ParanoidModel.after_destroy  :after_destroy_callback
         ParanoidModel.after_commit   :after_commit_callback
 
-        @model.should_receive(:before_destroy_callback).once
-        @model.should_receive(:after_destroy_callback).once
-        @model.should_receive(:after_commit_callback).once.and_return(true)
+        expect(@model).to receive(:before_destroy_callback).once
+        expect(@model).to receive(:after_destroy_callback).once
+        expect(@model).to receive(:after_commit_callback).once.and_return(true)
 
         @model.destroy
       end
@@ -121,9 +121,9 @@ describe Kakurenbo::SoftDeleteCore do
         ParanoidModel.before_save   :before_save_callback
         ParanoidModel.validate      :validate_callback
 
-        @model.should_receive(:before_update_callback).exactly(0).times
-        @model.should_receive(:before_save_callback).exactly(0).times
-        @model.should_receive(:validate_callback).exactly(0).times
+        expect(@model).to receive(:before_update_callback).exactly(0).times
+        expect(@model).to receive(:before_save_callback).exactly(0).times
+        expect(@model).to receive(:validate_callback).exactly(0).times
 
         @model.destroy
       end
@@ -141,16 +141,16 @@ describe Kakurenbo::SoftDeleteCore do
 
     context 'when destroyed?' do
       it 'false if model not destroyed.' do
-        expect(@model.destroyed?).to be_false
+        expect(@model.destroyed?).to be_falsey
       end
 
       it 'false if model destroyed.' do
         @model.destroy
-        expect(@model.destroyed?).to be_true
+        expect(@model.destroyed?).to be_truthy
       end
 
       it 'alias deleted? to destroyed?' do
-        expect(@model.deleted?).to be_false
+        expect(@model.deleted?).to be_falsey
       end
     end
 
@@ -167,7 +167,7 @@ describe Kakurenbo::SoftDeleteCore do
           ParanoidModel.restore(@model.id)
         }.to change(ParanoidModel, :count).by(1)
 
-        expect(@model.reload.destroyed?).to be_false
+        expect(@model.reload.destroyed?).to be_falsey
       end
 
       it 'with ids, restore models.' do
@@ -175,8 +175,8 @@ describe Kakurenbo::SoftDeleteCore do
           ParanoidModel.restore([@model.id, @model2.id])
         }.to change(ParanoidModel, :count).by(2)
 
-        expect(@model.reload.destroyed?).to be_false
-        expect(@model2.reload.destroyed?).to be_false
+        expect(@model.reload.destroyed?).to be_falsey
+        expect(@model2.reload.destroyed?).to be_falsey
       end
     end
 
@@ -190,7 +190,7 @@ describe Kakurenbo::SoftDeleteCore do
           @model.restore!
         }.to change(ParanoidModel, :count).by(1)
 
-        expect(@model.reload.destroyed?).to be_false
+        expect(@model.reload.destroyed?).to be_falsey
       end
 
       it 'call callbacks of restore.' do
@@ -198,9 +198,9 @@ describe Kakurenbo::SoftDeleteCore do
         ParanoidModel.after_restore  :after_restore_callback
         ParanoidModel.after_commit   :after_commit_callback
 
-        @model.should_receive(:before_restore_callback).once
-        @model.should_receive(:after_restore_callback).once
-        @model.should_receive(:after_commit_callback).once.and_return(true)
+        expect(@model).to receive(:before_restore_callback).once
+        expect(@model).to receive(:after_restore_callback).once
+        expect(@model).to receive(:after_commit_callback).once.and_return(true)
 
         @model.restore!
       end
@@ -210,9 +210,9 @@ describe Kakurenbo::SoftDeleteCore do
         ParanoidModel.before_save   :before_save_callback
         ParanoidModel.validate      :validate_callback
 
-        @model.should_receive(:before_update_callback).exactly(0).times
-        @model.should_receive(:before_save_callback).exactly(0).times
-        @model.should_receive(:validate_callback).exactly(0).times
+        expect(@model).to receive(:before_update_callback).exactly(0).times
+        expect(@model).to receive(:before_save_callback).exactly(0).times
+        expect(@model).to receive(:validate_callback).exactly(0).times
 
         @model.restore!
       end
@@ -222,7 +222,7 @@ describe Kakurenbo::SoftDeleteCore do
           @model.restore!
         }.to change(ParanoidModel, :count).by(1)
 
-        expect(@model.reload.destroyed?).to be_false
+        expect(@model.reload.destroyed?).to be_falsey
       end
     end
   end
