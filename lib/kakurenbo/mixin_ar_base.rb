@@ -37,8 +37,13 @@ module Kakurenbo
 
       # Remodel Model as soft-delete.
       #
-      # @params column [Symbol] column of kakurenbo.
-      def remodel_as_soft_delete(column: :deleted_at)
+      # @params option [Hash] option.
+      # @option option [Symbol] column column of kakurenbo.
+      def remodel_as_soft_delete(options = {})
+        options.reverse_merge!(
+          :column => :deleted_at
+        )
+
         unless paranoid?
           alias_method :hard_delete!,  :delete
           alias_method :hard_destroy!, :destroy
@@ -47,7 +52,7 @@ module Kakurenbo
           include Kakurenbo::SoftDeleteCore
         end
 
-        self.kakurenbo_column = column
+        self.kakurenbo_column = options[:column]
       end
       alias_method :acts_as_paranoid, :remodel_as_soft_delete
 
