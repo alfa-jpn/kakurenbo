@@ -9,17 +9,36 @@ module Kakurenbo
       # Initialize Kakurenbo in child class.
       def inherited(child_class)
         super
+
+        child_class.define_singleton_method :table_name= do |value|
+          super(value)
+          if has_kakurenbo_column?
+            remodel_as_soft_delete
+          else
+            remodel_as_original
+          end
+        end
+
         child_class.instance_eval do
           remodel_as_soft_delete if has_kakurenbo_column?
         end
       end
 
+      # Remodel Model as normal.
+      # @note Restore to original model.
+      def remodel_as_original
+        if paranoid?
+          alias_method :delete, :hard_delete!
+          alias_method :destroy, :hard_destroy!
+
+          define_singleton_method(:paranoid?) { false }
+        end
+      end
+
       # Remodel Model as soft-delete.
       #
-      # @options [Hash] option
-      #   default: {
-      #     :column => :deleted_at
-      #   }
+      # @params option [Hash] option.
+      # @option option [Symbol] column column of kakurenbo.
       def remodel_as_soft_delete(options = {})
         options.reverse_merge!(
           :column => :deleted_at
@@ -42,19 +61,13 @@ module Kakurenbo
         false
       end
 
-      # When set table name, remodel.
-      def table_name=(value)
-        super
-        remodel_as_soft_delete if has_kakurenbo_column?
-      end
-
       private
       # Check if Model has kakurenbo_column.
       #
       # @return [Boolean] result.
       def has_kakurenbo_column?
         begin
-          column_names.include?('deleted_at')
+          table_exists? and column_names.include?('deleted_at')
         rescue
           false
         end
