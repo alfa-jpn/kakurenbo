@@ -49,8 +49,12 @@ module Kakurenbo
       def self.extended(base_class)
         base_class.instance_eval {
           scope :only_deleted,    ->{ with_deleted.where.not( kakurenbo_column => nil ) }
-          scope :with_deleted,    ->{ all.tap{ |s| s.default_scoped = false } }
           scope :without_deleted, ->{ where(kakurenbo_column => nil) }
+          if ActiveRecord::VERSION::STRING >= "4.1"
+            scope :with_deleted,  ->{ unscope :where => kakurenbo_column }
+          else
+            scope :with_deleted,  ->{ all.tap{ |s| s.default_scoped = false } }
+          end
 
           default_scope ->{ without_deleted }
         }
@@ -73,18 +77,24 @@ module Kakurenbo
       update_column kakurenbo_column, current_time_from_proper_timezone
     end
 
-    def destroy
-      return if destroyed?
-      with_transaction_returning_status do
-        destroy_at = current_time_from_proper_timezone
-        run_callbacks(:destroy){ update_column kakurenbo_column, destroy_at }
-      end
-    end
-
-    def destroy!
-      with_transaction_returning_status do
-        hard_destroy_associated_records
-        self.reload.hard_destroy!
+    # destroy record and run callbacks.
+    #
+    # @param options [Hash] options.
+    #   defaults: {
+    #     hard: false
+    #   }
+    def destroy(options = {:hard => false})
+      if options[:hard]
+        with_transaction_returning_status do
+          hard_destroy_associated_records
+          self.reload.hard_destroy!
+        end
+      else
+        return true if destroyed?
+        with_transaction_returning_status do
+          destroy_at = current_time_from_proper_timezone
+          run_callbacks(:destroy){ update_column kakurenbo_column, destroy_at }
+        end
       end
     end
 
@@ -148,7 +158,7 @@ module Kakurenbo
     # Hard-Destroy associated records.
     def hard_destroy_associated_records
       each_dependent_destroy_records do |record|
-        record.destroy!
+        record.destroy(hard: true)
       end
     end
 

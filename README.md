@@ -61,7 +61,7 @@ When restore, call restore callbacks.`before_restore` `after_restore`
 
 ``` ruby
 model = Model.new
-model.destroy!
+model.destroy(hard: true)
 ```
 
 ### check if a record is fotdeleted
