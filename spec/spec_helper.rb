@@ -6,7 +6,7 @@ RSpec.configure do |config|
   config.mock_framework = :rspec
   config.before(:all) {
     Dir.mkdir('tmp') unless Dir.exists?('tmp')
-    ActiveRecord::Base.establish_connection(:adapter => 'sqlite3', :database => 'tmp/rspec.sqlite')
+    ActiveRecord::Base.establish_connection(:adapter => 'sqlite3', :database => ':memory:')
   }
 end
 

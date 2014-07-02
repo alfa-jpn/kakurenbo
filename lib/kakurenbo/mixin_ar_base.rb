@@ -8,30 +8,37 @@ module Kakurenbo
     module ClassMethods
       # Initialize Kakurenbo in child class.
       def inherited(child_class)
+        super
+
+        child_class.define_singleton_method :table_name= do |value|
+          super(value)
+          if has_kakurenbo_column?
+            remodel_as_soft_delete
+          else
+            remodel_as_original
+          end
+        end
+
         child_class.instance_eval do
           remodel_as_soft_delete if has_kakurenbo_column?
         end
+      end
 
-        # Define after initialize. Because `table_exists?` call `table_name=`.
-        child_class.define_singleton_method :table_name= do |value|
-          super(value)
-          remodel_as_soft_delete if has_kakurenbo_column?
+      # Remodel Model as normal.
+      # @note Restore to original model.
+      def remodel_as_original
+        if paranoid?
+          alias_method :delete, :hard_delete!
+          alias_method :destroy, :hard_destroy!
+
+          define_singleton_method(:paranoid?) { false }
         end
-
-        super
       end
 
       # Remodel Model as soft-delete.
       #
-      # @options [Hash] option
-      #   default: {
-      #     :column => :deleted_at
-      #   }
-      def remodel_as_soft_delete(options = {})
-        options.reverse_merge!(
-          :column => :deleted_at
-        )
-
+      # @params column [Symbol] column of kakurenbo.
+      def remodel_as_soft_delete(column: :deleted_at)
         unless paranoid?
           alias_method :hard_delete!,  :delete
           alias_method :hard_destroy!, :destroy
@@ -40,7 +47,7 @@ module Kakurenbo
           include Kakurenbo::SoftDeleteCore
         end
 
-        self.kakurenbo_column = options[:column]
+        self.kakurenbo_column = column
       end
       alias_method :acts_as_paranoid, :remodel_as_soft_delete
 
