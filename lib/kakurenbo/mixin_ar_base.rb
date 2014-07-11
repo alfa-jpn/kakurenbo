@@ -6,6 +6,8 @@ module Kakurenbo
     end
 
     module ClassMethods
+      delegate :restore, :restore_all, {:to => :with_deleted}
+
       # Initialize Kakurenbo in child class.
       def inherited(child_class)
         super
@@ -28,8 +30,12 @@ module Kakurenbo
       # @note Restore to original model.
       def remodel_as_original
         if paranoid?
-          alias_method :delete, :hard_delete!
-          alias_method :destroy, :hard_destroy!
+          alias_method :delete,   :hard_delete
+          alias_method :destroy,  :hard_destroy
+          alias_method :destroy!, :hard_destroy!
+
+          singleton_class.send(:alias_method, :delete, :hard_delete)
+          singleton_class.send(:alias_method, :delete_all, :hard_delete_all)
 
           define_singleton_method(:paranoid?) { false }
         end
@@ -45,11 +51,15 @@ module Kakurenbo
         )
 
         unless paranoid?
-          alias_method :hard_delete!,  :delete
-          alias_method :hard_destroy!, :destroy
+          alias_method :hard_delete,   :delete
+          alias_method :hard_destroy,  :destroy
+          alias_method :hard_destroy!, :destroy!
+
+          singleton_class.send(:alias_method, :hard_delete, :delete)
+          singleton_class.send(:alias_method, :hard_delete_all, :delete_all)
 
           class_attribute :kakurenbo_column
-          include Kakurenbo::SoftDeleteCore
+          include Kakurenbo::Core
         end
 
         self.kakurenbo_column = options[:column]

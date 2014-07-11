@@ -1,5 +1,5 @@
 module Kakurenbo
-  module SoftDeleteCore
+  module Core
     # Extend ClassMethods after include.
     def self.included(base_class)
       base_class.extend ClassMethods
@@ -8,28 +8,13 @@ module Kakurenbo
       base_class.extend Aliases
     end
 
-    module ClassMethods
-      def paranoid?
-        true
-      end
-
-      # Destroy model(s).
-      #
-      # @param id [Array<Integer> or Integer] id or ids
-      def destroy(id)
-        transaction do
-          where(:id => id).each{|m| m.destroy}
-        end
-      end
-
-      # Restore model(s).
-      #
-      # @param id      [Array<Integer> or Integer] id or ids.
-      # @param options [Hash] options(same restore of instance methods.)
-      def restore(id, options = {:recursive => true})
-        transaction do
-          only_deleted.where(:id => id).each{|m| m.restore!(options)}
-        end
+    module Aliases
+      def self.extended(base_class)
+        base_class.instance_eval {
+          alias_method :deleted?, :destroyed?
+          alias_method :recover,  :restore
+          alias_method :recover!, :restore!
+        }
       end
     end
 
@@ -41,8 +26,12 @@ module Kakurenbo
             set_callback(:restore, on, *args, &block)
           end
         end
-        base_class.define_callbacks :restore
+        base_class.define_model_callbacks :restore
       end
+    end
+
+    module ClassMethods
+      def paranoid?; true end
     end
 
     module Scopes
@@ -61,41 +50,52 @@ module Kakurenbo
       end
     end
 
-    module Aliases
-      def self.extended(base_class)
-        base_class.instance_eval {
-          alias_method :delete!,  :hard_delete!
-          alias_method :deleted?, :destroyed?
-          alias_method :restore,  :restore!
-          alias_method :recover,  :restore!
-        }
+    # delete record.
+    #
+    # @param options [Hash] options.
+    # @option options [Boolean] hard (false) if hard-delete.
+    def delete(options = {:hard => false})
+      if options[:hard]
+        self.class.delete(self.id, options)
+      else
+        return if new_record? or destroyed?
+        update_column kakurenbo_column, current_time_from_proper_timezone
       end
-    end
-
-    def delete
-      return if new_record? or destroyed?
-      update_column kakurenbo_column, current_time_from_proper_timezone
     end
 
     # destroy record and run callbacks.
     #
     # @param options [Hash] options.
-    #   defaults: {
-    #     hard: false
-    #   }
+    # @option options [Boolean] hard (false) if hard-delete.
+    #
+    # @return [Boolean, self] if action is cancelled, return false.
     def destroy(options = {:hard => false})
       if options[:hard]
         with_transaction_returning_status do
           hard_destroy_associated_records
-          self.reload.hard_destroy!
+          self.reload.hard_destroy
         end
       else
         return true if destroyed?
         with_transaction_returning_status do
           destroy_at = current_time_from_proper_timezone
-          run_callbacks(:destroy){ update_column kakurenbo_column, destroy_at }
+          run_callbacks(:destroy){ update_column kakurenbo_column, destroy_at; self }
         end
       end
+    end
+
+    # destroy record and run callbacks.
+    #
+    # @param options [Hash] options.
+    # @option options [Boolean] hard (false) if hard-delete.
+    #
+    # @return [self] self.
+    def destroy!(options = {:hard => false})
+      destroy(options) || raise(ActiveRecord::RecordNotDestroyed)
+    end
+
+    def destroy_row
+      relation_for_destroy.delete_all(nil, :hard => true)
     end
 
     def destroyed?
@@ -113,17 +113,30 @@ module Kakurenbo
     # restore record.
     #
     # @param options [Hash] options.
-    #   defaults: {
-    #     recursive: true
-    #   }
-    def restore!(options = {:recursive => true})
+    # @option options [Boolean] recursive (true) if restore recursive.
+    #
+    # @return [Boolean, self] if action is cancelled, return false.
+    def restore(options = {:recursive => true})
+      return false unless destroyed?
+
       with_transaction_returning_status do
         run_callbacks(:restore) do
           parent_deleted_at = send(kakurenbo_column)
-          update_column kakurenbo_column, nil
           restore_associated_records(parent_deleted_at) if options[:recursive]
+          update_column kakurenbo_column, nil
+          self
         end
       end
+    end
+
+    # restore record.
+    #
+    # @param options [Hash] options.
+    # @option options [Boolean] hard (false) if hard-delete.
+    #
+    # @return [self] self.
+    def restore!(options = {:recursive => true})
+      restore(options) || raise(ActiveRecord::RecordNotRestored)
     end
 
     private

@@ -38,5 +38,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "yard"
   spec.add_development_dependency "sqlite3"
 
-  spec.add_dependency 'activerecord', '>= 4.0.0'
+  spec.add_dependency 'activerecord', '>= 4.0.2'
 end

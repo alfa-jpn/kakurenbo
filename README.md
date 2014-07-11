@@ -1,7 +1,7 @@
 # Kakurenbo
 
 Kakurenbo provides soft delete.
-Kakurenbo is a re-implementation of [paranoia](http://github.com/radar/paranoia) and [acts\_as\_paranoid](http://github.com/technoweenie/acts_as_paranoid) for Rails4 and 3. implemented a function that other gems are not enough.
+Kakurenbo is a re-implementation of [paranoia](http://github.com/radar/paranoia) and [acts\_as\_paranoid](http://github.com/technoweenie/acts_as_paranoid) for Rails4. implemented a function that other gems are not enough.
 
 The usage of the Kakurenbo is very very very simple. Only add `deleted_at`(datetime) to column.
 Of course you can use `acts_as_paranoid`.In addition, Kakurenbo has many advantageous.
@@ -30,38 +30,50 @@ _Kakurenbo provides `acts_as_paranoid` method for compatibility._
 ### soft-delete
 
 ``` ruby
+# if action is cancelled by callbacks, return false.
 model.destroy
 
-# This is usable, too.
-Model.destroy(id)
-Model.destroy([id1,id2,id3])
+# if action is cancelled by callbacks, raise ActiveRecord::RecordNotDestroyed.
+model.destroy!
+
+# selected model will be destroyed.
+Model.where(:foo => 'bar').destroy_all
 ```
 
 when want without callbacks.
 
 ``` ruby
 model.delete
+
+# selected model will be deleted.
+Model.where(:foo => 'bar').delete_all
 ```
 
 ### restore a record
 
 ``` ruby
+# if action is cancelled by callbacks, return false.
+model.restore
+
+# if action is cancelled by callbacks, raise ActiveRecord::RecordNotRestored.
 model.restore!
-
-# This is usable, too.
-Model.restore(id)
-Model.restore([id1,id2,id3])
 ```
-
 When restore, call restore callbacks.`before_restore` `after_restore`
 
 
 ### hard-delete
-
-
+ Use hard option.
 ``` ruby
-model = Model.new
 model.destroy(hard: true)
+
+# without callbacks.
+model.delete(hard: true)
+
+# selected model will be destroyed.
+Model.where(:foo => 'bar').destroy_all(nil, hard: true)
+
+# selected model will be destroyed.
+Model.where(:foo => 'bar').delete_all(nil, hard: true)
 ```
 
 ### check if a record is fotdeleted
