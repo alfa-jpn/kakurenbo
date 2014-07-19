@@ -5,6 +5,7 @@ require "active_record"
 # require kakurenbo modules.
 require "kakurenbo/version"
 require "kakurenbo/mixin_ar_base"
+require "kakurenbo/mixin_ar_associations"
 require "kakurenbo/mixin_ar_relation"
 require "kakurenbo/core"
 
@@ -16,3 +17,6 @@ ActiveRecord::Base.send :include, Kakurenbo::MixinARBase
 
 # Kakurenbo Mixin to ActiveRecord::Relation.
 ActiveRecord::Relation.send :include, Kakurenbo::MixinARRelation
+
+# Kakurenbo Mixin to ActiveRecord::Associations
+ActiveRecord::Associations::Association.send :include, Kakurenbo::MixinARAssociations::Association

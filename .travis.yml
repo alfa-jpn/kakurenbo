@@ -5,6 +5,7 @@ before_install:
 rvm:
   - 1.9.3
   - 2.1.0
+  - 2.1.2
 env:
   - ACTIVE_RECORD_VERSION='~> 4.0.2'
   - ACTIVE_RECORD_VERSION='~> 4.1.0'
