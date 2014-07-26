@@ -9,3 +9,4 @@ rvm:
 env:
   - ACTIVE_RECORD_VERSION='~> 4.0.2'
   - ACTIVE_RECORD_VERSION='~> 4.1.0'
+  - ACTIVE_RECORD_VERSION='~> 4.1.4'

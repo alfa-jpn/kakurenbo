@@ -11,6 +11,11 @@ describe Kakurenbo::Core do
   create_temp_table(:paranoid_child_models)        { |t| t.integer :parent_model_id; t.datetime :deleted_at }
   create_temp_table(:paranoid_single_child_models) { |t| t.integer :parent_model_id; t.datetime :deleted_at }
 
+  subject :subject_hard_delete do
+    create_unrelated_children
+    expect { parent.destroy!(hard: true) }.to change{ child_class.with_deleted.count }.by(children.length * -1)
+  end
+
   subject :subject_soft_delete do
     create_unrelated_children
     expect { parent.destroy! }.to change(child_class, :count).by(children.length * -1)
@@ -91,6 +96,12 @@ describe Kakurenbo::Core do
       end
     end
 
+    context 'when parent is hard-destroyed' do
+      it 'related children will be hard-destroyed.' do
+        subject_hard_delete
+      end
+    end
+
     context 'when parent is restored' do
       it 'related children will be restored.' do
         subject_restore
@@ -125,6 +136,12 @@ describe Kakurenbo::Core do
       end
     end
 
+    context 'when parent is hard-destroyed' do
+      it 'related children will be hard-destroyed.' do
+        subject_hard_delete
+      end
+    end
+
     context 'when parent is restored' do
       it 'related children will be restored.' do
         subject_restore
@@ -142,7 +159,7 @@ describe Kakurenbo::Core do
     end
   end
 
-  describe 'ParanoidSingleChildModel(has_one)' do
+  describe 'ParanoidSingleChildModel(belongs_to)' do
     let :child_class do
       ParanoidSingleChildModel
     end
@@ -156,6 +173,12 @@ describe Kakurenbo::Core do
     context 'when parent is destroyed' do
       it 'related children will be destroyed.' do
         subject_soft_delete
+      end
+    end
+
+    context 'when parent is hard-destroyed' do
+      it 'related children will be hard-destroyed.' do
+        subject_hard_delete
       end
     end
 

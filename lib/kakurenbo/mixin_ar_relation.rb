@@ -1,6 +1,6 @@
 module Kakurenbo
   module MixinARRelation
-    # Extend ClassMethods after include.
+    # Override methods.
     def self.included(base_class)
       base_class.class_eval do
         alias_method :hard_delete_all, :delete_all

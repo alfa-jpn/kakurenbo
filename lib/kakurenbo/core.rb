@@ -78,7 +78,7 @@ module Kakurenbo
       else
         return true if destroyed?
         with_transaction_returning_status do
-          destroy_at = current_time_from_proper_timezone
+          destroy_at = Time.now
           run_callbacks(:destroy){ update_column kakurenbo_column, destroy_at; self }
         end
       end
@@ -121,8 +121,7 @@ module Kakurenbo
 
       with_transaction_returning_status do
         run_callbacks(:restore) do
-          parent_deleted_at = send(kakurenbo_column)
-          restore_associated_records(parent_deleted_at) if options[:recursive]
+          restore_associated_records if options[:recursive]
           update_column kakurenbo_column, nil
           self
         end
@@ -140,50 +139,29 @@ module Kakurenbo
     end
 
     private
-    # get recoreds of association.
+    # All Scope of dependent association.
     #
-    # @param association [ActiveRecord::Associations] association.
-    # @return [Array or CollectionProxy] records.
-    def associated_records(association)
-      resource = send(association.name)
-      if resource.nil?
-        []
-      elsif association.collection?
-        resource.with_deleted
-      else
-        [resource]
-      end
-    end
-
-    # Calls the given block once for each dependent destroy records.
-    # @note Only call the class of paranoid.
-    #
-    # @param &block [Proc{|record|.. }] execute block.
-    def each_dependent_destroy_records(&block)
-      self.class.reflect_on_all_associations.each do |association|
-        next unless association.options[:dependent] == :destroy
-        next unless association.klass.paranoid?
-
-        associated_records(association).each &block
-      end
+    # @return [Array<ActiveRecord::Relation>] array of dependent association.
+    def dependent_association_scopes
+      self.class.reflect_on_all_associations.select { |reflection|
+        reflection.options[:dependent] == :destroy and reflection.klass.paranoid?
+      }.map { |reflection|
+        self.association(reflection.name).tap {|assoc| assoc.reset_scope }.scope
+      }
     end
 
     # Hard-Destroy associated records.
     def hard_destroy_associated_records
-      each_dependent_destroy_records do |record|
-        record.destroy(hard: true)
+      dependent_association_scopes.each do |scope|
+        scope.with_deleted.destroy_all(nil, hard: true)
       end
     end
 
     # Restore associated records.
-    # @note Not restore if deleted_at older than parent_deleted_at.
-    #
-    # @param parent_deleted_at [Time] The time when parent was deleted.
-    def restore_associated_records(parent_deleted_at)
-      each_dependent_destroy_records do |record|
-        next unless record.destroyed?
-        next unless parent_deleted_at <= record.send(kakurenbo_column)
-        record.restore!
+    # @note Record will be restored if record#deleted_at is newer than parent_deleted_at.
+    def restore_associated_records
+      dependent_association_scopes.each do |scope|
+        scope.restore_all
       end
     end
   end
