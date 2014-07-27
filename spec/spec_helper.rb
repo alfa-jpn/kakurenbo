@@ -3,6 +3,7 @@ require "bundler/setup"
 require "kakurenbo"
 
 RSpec.configure do |config|
+  config.color = true
   config.mock_framework = :rspec
   config.before(:all) {
     ActiveRecord::Base.establish_connection(:adapter => 'sqlite3', :database => ':memory:')

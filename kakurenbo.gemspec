@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = <<-EOF
     provides soft delete.
-    Kakurenbo is a re-implementation of paranoia and acts_as_paranoid for Rails4 and 3.
+    Kakurenbo is a re-implementation of paranoia and acts_as_paranoid for Rails4.
     implemented a function that other gems are not enough.
   EOF
 
