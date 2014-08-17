@@ -90,4 +90,23 @@ describe Kakurenbo::MixinARBase do
       end
     end
   end
+
+
+  describe 'abstract_class' do
+    before :all do
+      class Parent < ActiveRecord::Base
+        self.abstract_class = true
+      end
+      class Child < Parent; end
+    end
+
+    after :all do
+      Object.send(:remove_const, :Parent)
+      Object.send(:remove_const, :Child)
+    end
+
+    it '.table_name of Child return `children`' do
+      expect(Child.table_name).to eq('children')
+    end
+  end
 end
