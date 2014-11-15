@@ -94,8 +94,8 @@ module Kakurenbo
       destroy(options) || raise(ActiveRecord::RecordNotDestroyed)
     end
 
-    def destroy_row
-      relation_for_destroy.delete_all(nil, :hard => true)
+    def destroy_row(options = {:hard => true})
+      relation_for_destroy.delete_all(nil, options)
     end
 
     def destroyed?
