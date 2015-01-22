@@ -32,6 +32,10 @@ describe Kakurenbo::Core do
     expect { parent.restore! }.not_to change(child_class, :count)
   end
 
+  subject :subject_destroy_child_with_where do
+    expect { destroy_child_with_where }.to change(child_class, :count).by(2)
+  end
+
   let :create_unrelated_children do
     [
       child_class.create!,
@@ -41,6 +45,10 @@ describe Kakurenbo::Core do
 
   let :destroy_children do
     children.each {|child| child.destroy!}
+  end
+
+  let :destroy_child_with_where do
+    parent.normal_child_models.where(id: children.first.id).destroy_all
   end
 
   let :parent do
@@ -73,6 +81,12 @@ describe Kakurenbo::Core do
     context 'when parent is destroyed' do
       it 'related children will be destroyed.' do
         subject_soft_delete
+      end
+    end
+
+    context 'when child is deleted by destroy_all with where,' do
+      it 'child will be delete.' do
+        subject_destroy_child_with_where
       end
     end
   end
