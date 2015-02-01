@@ -25,7 +25,7 @@ module Kakurenbo
           remodel_as_soft_delete if has_kakurenbo_column?
 
           # Reset @table name, because ActiveRecord doesn't expect initialized at here.
-          remove_instance_variable(:@table_name)
+          remove_instance_variable(:@table_name) if instance_variable_defined? :@table_name
         end
       end
 
