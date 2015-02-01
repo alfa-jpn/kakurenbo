@@ -7,12 +7,11 @@ The usage of the Kakurenbo is very very very simple. Only add `deleted_at`(datet
 Of course you can use `acts_as_paranoid`.In addition, Kakurenbo has many advantageous.
 
 # Warning
-
+### kakurenbo is deprecated if you use in a new rails project!
+### You should use [kakurenbo-puti](http://github.com/alfa-jpn/kakurenbo-puti)!
 
 
 # Installation
-## kakurenbo is deprecated if you use in a new rails project!
-### You should use [kakurenbo-puti](http://github.com/alfa-jpn/kakurenbo-puti)!
 
 ```ruby
 gem 'kakurenbo'
